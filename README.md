@@ -4,7 +4,7 @@
 
 ## 一键部署
 
-[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/_CeE7I?referralCode=fcYa38)
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/RFRwBj?referralCode=fcYa38)
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Tosd0/device-event-logger)
 
