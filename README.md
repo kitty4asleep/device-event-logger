@@ -2,26 +2,77 @@
 
 记录用户设备事件的 API 端点，支持通过 MCP 查询。
 
-## 部署
+## 一键部署
+
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/nn_FSb?referralCode=fcYa38&utm_medium=integration&utm_source=template&utm_campaign=generic)
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Tosd0/device-event-logger)
 
-[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/template/TEMPLATE_ID)
+点击按钮即可自动创建服务和 PostgreSQL 数据库。数据库表会在首次请求时自动初始化。
 
-### Render
+## 手动部署
 
-点击上方按钮即可。Render 会通过 `render.yaml` 自动创建 PostgreSQL 数据库并配置所有环境变量。数据库表会在首次请求时自动创建。
+### Deno Deploy
 
-### Railway
+1. Fork 或导入此仓库到 GitHub
+2. 前往 [dash.deno.com](https://dash.deno.com) 创建项目，关联仓库
+3. 设置入口文件为 `entry/deno.ts`
+4. 在项目设置中添加环境变量：
+   - `DATABASE_URL` — PostgreSQL 连接字符串
+   - `API_KEY` — 认证密钥
+   - `TZ_OFFSET` — `480`（可选）
+5. 部署即可，推送代码会自动重新部署
 
-1. 将此仓库推送到 GitHub（需包含 `package.json`）
-2. 前往 [railway.com/button](https://railway.com/button)，从 `Tosd0/device-event-logger` 创建模板
-3. 添加 **Web Service** + **PostgreSQL** 插件
-4. 设置变量：
-   - `DATABASE_URL` -> `${{Postgres.DATABASE_URL}}`
-   - `API_KEY` -> 你的密钥
-   - `TZ_OFFSET` -> `480`（默认值，UTC 偏移分钟数）
-5. 发布模板后，将上方徽章 URL 中的 `TEMPLATE_ID` 替换为实际 ID
+### Cloudflare Workers
+
+1. 安装 Wrangler CLI：
+
+```bash
+npm install -g wrangler
+```
+
+2. 创建 `wrangler.toml`：
+
+```toml
+name = "device-event-logger"
+main = "entry/cloudflare.ts"
+compatibility_date = "2024-01-01"
+node_compat = true
+
+[vars]
+TZ_OFFSET = "480"
+```
+
+3. 设置 Secrets：
+
+```bash
+wrangler secret put DATABASE_URL
+wrangler secret put API_KEY
+```
+
+4. 部署：
+
+```bash
+wrangler deploy
+```
+
+> 注意：CF Workers 需要支持 TCP 连接的 PostgreSQL（如 Neon、Supabase），通过 `cloudflare:sockets` 连接。
+
+### Node.js
+
+```bash
+git clone https://github.com/Tosd0/device-event-logger.git
+cd device-event-logger
+npm install
+
+# 设置环境变量
+export DATABASE_URL="postgres://user:pass@host:5432/dbname"
+export API_KEY="your-secret-key"
+export TZ_OFFSET="480"
+
+# 启动（需要 Node.js >= 22）
+npm start
+```
 
 ## 环境变量
 
@@ -30,4 +81,4 @@
 | `DATABASE_URL` | PostgreSQL 连接字符串 | 是 |
 | `API_KEY` | `/events` 端点的认证密钥 | 是 |
 | `TZ_OFFSET` | 与 UTC 的时区偏移（分钟，默认 `480`） | 否 |
-| `PORT` | 服务端口（默认 `8000`） | 否 |
+| `PORT` | 服务端口（默认 `8000`，仅 Node/Deno） | 否 |
