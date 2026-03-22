@@ -4,7 +4,7 @@ import { formatWithOffset } from "./timezone.ts";
 import { withRetry } from "./db.ts";
 
 export function parseEventQueryFromUrl(url: URL): EventQuery | { error: string } {
-  return parseEventQuery({
+  const result = parseEventQuery({
     hours: url.searchParams.get("hours") ?? undefined,
     since: url.searchParams.get("since") ?? undefined,
     until: url.searchParams.get("until") ?? undefined,
@@ -13,6 +13,8 @@ export function parseEventQueryFromUrl(url: URL): EventQuery | { error: string }
     limit: url.searchParams.get("limit") ?? undefined,
     offset: url.searchParams.get("offset") ?? undefined,
   }, false);
+  // When allowDefaultHours=false, parseEventQuery never returns string
+  return result as EventQuery | { error: string };
 }
 
 export function parseEventQueryFromToolArgs(args: Record<string, unknown>): EventQuery | string {
@@ -81,7 +83,7 @@ export async function queryEvents(
   offsetMinutes: number,
 ): Promise<{ events: EventRecord[]; total: number }> {
   const conditions: string[] = [];
-  const values: unknown[] = [];
+  const values: (string | number)[] = [];
   let paramIndex = 1;
 
   conditions.push(`ts >= $${paramIndex++}`);
