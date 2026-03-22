@@ -40,7 +40,8 @@ type Env = {
 }
 
 type Vars = {
-  sql: postgres.Sql  // injected by DB middleware
+  sql: postgres.Sql       // injected by DB middleware
+  offsetMinutes: number   // parsed from TZ_OFFSET env var
 }
 ```
 
