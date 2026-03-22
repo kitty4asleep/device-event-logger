@@ -6,9 +6,9 @@ const mcp = new Hono<{ Bindings: Env; Variables: Vars }>();
 
 mcp.post("/", handleMcpPost);
 
-mcp.on(["GET", "DELETE"], "/", (c) => {
+mcp.all("/", (c) => {
   c.header("Allow", "POST, OPTIONS");
-  return c.body(null, 405);
+  return c.json({ error: "Method not allowed" }, 405);
 });
 
 export { mcp };

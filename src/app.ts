@@ -12,10 +12,11 @@ export type AppOptions = {
   postgresOptions?: Record<string, unknown>;
 };
 
-let sqlInstance: postgres.Sql | null = null;
-
 export function createApp(options?: AppOptions) {
   const app = new Hono<{ Bindings: Env; Variables: Vars }>();
+
+  let sqlInstance: postgres.Sql | null = null;
+  let cachedOffsetMinutes: number | null = null;
 
   // CORS
   app.use("*", corsMiddleware);
@@ -37,8 +38,11 @@ export function createApp(options?: AppOptions) {
       const databaseUrl = c.env.DATABASE_URL ?? "";
       sqlInstance = createSql(databaseUrl, options?.postgresOptions);
     }
+    if (cachedOffsetMinutes === null) {
+      cachedOffsetMinutes = parseOffsetEnv(c.env.TZ_OFFSET);
+    }
     c.set("sql", sqlInstance);
-    c.set("offsetMinutes", parseOffsetEnv(c.env.TZ_OFFSET));
+    c.set("offsetMinutes", cachedOffsetMinutes);
     await next();
   });
 
