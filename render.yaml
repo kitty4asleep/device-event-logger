@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: device-event-logger
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: API_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: event-logger-db
+          property: connectionString
+      - key: TZ_OFFSET
+        value: "480"
+      - key: NODE_VERSION
+        value: "22"
+
+databases:
+  - name: event-logger-db
+    plan: free
+    databaseName: event_logger
