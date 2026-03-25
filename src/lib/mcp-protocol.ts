@@ -19,8 +19,9 @@ const SUPPORTED_MCP_PROTOCOL_VERSIONS = new Set([
 const MCP_SERVER_INFO = {
   name: "device-event-logger",
   title: "User Device Event Logger",
-  version: "1.1.0",
-  description: "Query user device event records and app usage summaries from a database. Read-only.",
+  version: "1.1.1",
+  description:
+    "Query user device event records and app usage summaries from a database. Read-only.",
 };
 
 const QUERY_EVENTS_TOOL = {
@@ -38,7 +39,8 @@ const QUERY_EVENTS_TOOL = {
       },
       since: {
         type: "string",
-        description: "Start time in ISO 8601 format. Overrides the default hours window.",
+        description:
+          "Start time in ISO 8601 format. Overrides the default hours window.",
       },
       until: {
         type: "string",
@@ -103,10 +105,7 @@ const LIST_EVENT_TYPES_TOOL = {
     type: "object",
     additionalProperties: false,
     properties: {
-      types: {
-        type: "array",
-        items: { type: "string" },
-      },
+      types: { type: "array", items: { type: "string" } },
     },
     required: ["types"],
   },
@@ -192,11 +191,17 @@ function jsonRpcResult(id: JsonRpcId, result: unknown) {
 }
 
 function isJsonRpcRequest(message: JsonRpcMessage): boolean {
-  return typeof message.method === "string" && Object.prototype.hasOwnProperty.call(message, "id");
+  return (
+    typeof message.method === "string" &&
+    Object.prototype.hasOwnProperty.call(message, "id")
+  );
 }
 
 function isJsonRpcNotification(message: JsonRpcMessage): boolean {
-  return typeof message.method === "string" && !Object.prototype.hasOwnProperty.call(message, "id");
+  return (
+    typeof message.method === "string" &&
+    !Object.prototype.hasOwnProperty.call(message, "id")
+  );
 }
 
 function isJsonRpcResponse(message: JsonRpcMessage): boolean {
@@ -214,7 +219,7 @@ function getProtocolVersionFromHeaders(c: Context): string {
 async function callQueryEventsTool(
   args: Record<string, unknown>,
   sql: postgres.Sql,
-  offsetMinutes: number,
+  offsetMinutes: number
 ) {
   const parsed = parseEventQueryFromToolArgs(args);
   if (typeof parsed === "string") {
@@ -257,9 +262,13 @@ async function callListEventTypesTool(sql: postgres.Sql) {
   }
 }
 
-async function callQueryAppSummaryTool(args: Record<string, unknown>, sql: postgres.Sql) {
+async function callQueryAppSummaryTool(
+  args: Record<string, unknown>,
+  sql: postgres.Sql
+) {
   const hours = typeof args.hours === "number" ? args.hours : 24;
-  const value = typeof args.value === "string" && args.value.trim() ? args.value.trim() : null;
+  const value =
+    typeof args.value === "string" && args.value.trim() ? args.value.trim() : null;
 
   if (!Number.isFinite(hours) || hours <= 0) {
     return {
@@ -344,6 +353,7 @@ async function callQueryAppSummaryTool(args: Record<string, unknown>, sql: postg
           item._openAt = ts;
         } else {
           item.duplicateOpens += 1;
+          item._openAt = ts; // 用最新 open 覆盖旧 open，避免跨段误配
         }
       } else if (row.type === "app.close") {
         item.closes += 1;
@@ -362,11 +372,8 @@ async function callQueryAppSummaryTool(args: Record<string, unknown>, sql: postg
     const apps = Array.from(appMap.values()).map((item) => {
       if (item._openAt !== null) {
         item.currentlyOpen = true;
-        item.durationSeconds += Math.floor(
-          (untilDate.getTime() - item._openAt.getTime()) / 1000
-        );
+        // 按你的口径：未闭合 open 不累计时长
       }
-
       const { _openAt, ...rest } = item;
       return rest;
     });
@@ -393,7 +400,7 @@ async function callQueryAppSummaryTool(args: Record<string, unknown>, sql: postg
             .slice(0, 20)
             .map(
               (app, i) =>
-                `${i + 1}. ${app.name} | ${app.durationSeconds}s | opens=${app.opens} closes=${app.closes} sessions=${app.sessions}`
+                `${i + 1}. ${app.name} | ${app.durationSeconds}s | opens=${app.opens} closes=${app.closes} sessions=${app.sessions} currentlyOpen=${app.currentlyOpen}`
             )
             .join("\n");
 
@@ -414,7 +421,7 @@ async function callQueryAppSummaryTool(args: Record<string, unknown>, sql: postg
 async function handleMcpRequest(
   message: JsonRpcMessage,
   sql: postgres.Sql,
-  offsetMinutes: number,
+  offsetMinutes: number
 ) {
   const id = (message.id ?? null) as JsonRpcId;
   const method = typeof message.method === "string" ? message.method : "";
