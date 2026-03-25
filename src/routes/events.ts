@@ -27,7 +27,7 @@ events.post("/", async (c) => {
         error:
           "Invalid 'type' format: use dot-separated lowercase alphanumeric (e.g. app.open)",
       },
-      400,
+      400
     );
   }
 
@@ -133,13 +133,14 @@ events.get("/summary", async (c) => {
           item._openAt = ts;
         } else {
           item.duplicateOpens += 1;
+          item._openAt = ts; // 用最新 open 覆盖旧 open，避免跨段误配
         }
       } else if (row.type === "app.close") {
         item.closes += 1;
         if (item._openAt !== null && ts.getTime() >= item._openAt.getTime()) {
           item.sessions += 1;
           item.durationSeconds += Math.floor(
-            (ts.getTime() - item._openAt.getTime()) / 1000,
+            (ts.getTime() - item._openAt.getTime()) / 1000
           );
           item._openAt = null;
         } else {
@@ -151,9 +152,7 @@ events.get("/summary", async (c) => {
     const apps = Array.from(appMap.values()).map((item) => {
       if (item._openAt !== null) {
         item.currentlyOpen = true;
-        item.durationSeconds += Math.floor(
-          (untilDate.getTime() - item._openAt.getTime()) / 1000,
-        );
+        // 按你的口径：未闭合 open 不累计时长
       }
 
       const { _openAt, ...rest } = item;
@@ -170,10 +169,7 @@ events.get("/summary", async (c) => {
     return c.json({
       ok: true,
       hours,
-      range: {
-        since,
-        until,
-      },
+      range: { since, until },
       totalApps: apps.length,
       apps,
     });
